@@ -130,9 +130,22 @@ body{
   margin-top:40px;padding:18px 60px;font-size:28px;font-weight:900;
   background:var(--green);color:#000;border:none;border-radius:20px;cursor:pointer
 }
+.voice-toggle{
+  position:fixed;top:12px;right:16px;z-index:999;
+  background:var(--card2);color:var(--gray);border:2px solid var(--border);
+  border-radius:28px;padding:6px 16px;font-size:14px;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;gap:6px;
+  transition:all .3s;opacity:.5;
+}
+.voice-toggle:hover,.voice-toggle.on{opacity:1}
+.voice-toggle.on{color:var(--green);border-color:var(--green)}
+.voice-toggle .v-icon{font-size:20px}
 </style>
 </head>
 <body>
+<button class="voice-toggle on" id="voiceBtn" onclick="toggleVoice()" title="语音提醒开关">
+  <span class="v-icon">🔊</span><span id="voiceLabel">开</span>
+</button>
 
 <!-- ════ 桌面顶部 5栏 ════ -->
 <div class="top-bar" id="wideTop">
@@ -194,6 +207,7 @@ const WCODE = {0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫�
 const WDESC = {0:"晴",1:"少云",2:"多云",3:"阴",45:"雾",48:"雾凇",51:"小阵雨",53:"阵雨",55:"大阵雨",61:"小雨",63:"中雨",65:"大雨",71:"小雪",73:"中雪",75:"大雪",77:"雪粒",80:"小阵雨",81:"中阵雨",82:"大阵雨",85:"小雪",86:"中雪",95:"雷雨",96:"冰雹雷雨",99:"大冰雹"};
 
 let weatherCache = null;
+let voiceEnabled = true; // 语音提醒开关
 
 // ═══════════ 桌面时钟（HH MM SS 独立）═══════════
 function updateWideClock() {
@@ -357,10 +371,39 @@ function renderAll() {
 renderAll();
 fetchWeather();
 
+// 初始化语音按钮状态
+try { var v = localStorage.getItem("voiceEnabled"); if (v === "0") voiceEnabled = false; } catch(e){}
+if (!voiceEnabled) {
+  var vb = document.getElementById("voiceBtn");
+  if (vb) {
+    vb.className = "voice-toggle";
+    vb.querySelector(".v-icon").textContent = "🔇";
+    document.getElementById("voiceLabel").textContent = "关";
+  }
+}
+
 // ═══════════ 14:50 午睡闹铃 ═══════════
 var alarmFired = false;
 var alarmAudio = null;
 
+function toggleVoice() {
+  voiceEnabled = !voiceEnabled;
+  var btn = document.getElementById("voiceBtn");
+  var lbl = document.getElementById("voiceLabel");
+  if (voiceEnabled) {
+    btn.className = "voice-toggle on";
+    btn.querySelector(".v-icon").textContent = "🔊";
+    lbl.textContent = "开";
+    try { localStorage.setItem("voiceEnabled","1"); } catch(e){}
+  } else {
+    btn.className = "voice-toggle";
+    btn.querySelector(".v-icon").textContent = "🔇";
+    lbl.textContent = "关";
+    try { localStorage.setItem("voiceEnabled","0"); } catch(e){}
+    if (window.speechSynthesis) speechSynthesis.cancel();
+    stopAlarm();
+  }
+}
 function checkAlarm() {
   var n = new Date();
   var h = n.getHours(), m = n.getMinutes(), s = n.getSeconds();
@@ -432,8 +475,10 @@ function showAlarm() {
   document.body.appendChild(div);
   document.getElementById("dismissBtn").onclick = function(e){ e.stopPropagation(); dismiss(); };
 
-  beepAlarm(15);
-  setTimeout(function(){ speakChinese("一苇 二杭起床了", 3, 2000); }, 300);
+  if (voiceEnabled) {
+    beepAlarm(15);
+    setTimeout(function(){ speakChinese("一苇 二杭起床了", 3, 2000); }, 300);
+  }
 
   setTimeout(function(){ dismiss(); }, 30000);
 }
@@ -463,7 +508,7 @@ function checkReminders() {
     var r = reminders[i];
     if (h === r.at[0] && m === r.at[1] && s >= 0 && s < 10 && !remindFired[r.tag]) {
       remindFired[r.tag] = true;
-      speakChinese(r.text, 3, 6000);
+      if (voiceEnabled) speakChinese(r.text, 3, 6000);
     }
   }
 }
