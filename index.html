@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>宝宝日历</title>
+<style>
+:root{
+  --bg:#050505;--card:#1A1A1A;--card2:#222;
+  --red:#FF4444;--green:#4ADE80;--gold:#FACC15;--blue:#60A5FA;
+  --white:#FFFFFF;--gray:#999;--border:#333;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,"PingFang SC","Hiragino Sans GB",sans-serif;
+  background:var(--bg);color:var(--white);
+  padding:0;width:100vw;height:100vh;overflow-y:auto;
+  -webkit-font-smoothing:antialiased;user-select:none;
+}
+
+/* ═══════════ 桌面顶部 5栏 ═══════════ */
+.top-bar{
+  display:flex;flex-direction:row;align-items:stretch;
+  padding:0;margin:0 auto;height:25vh;
+  background:var(--bg);
+  max-width:1200px;
+}
+.top-col{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-right:1px solid #1A1A1A;padding:4px;
+}
+.top-col:last-child{border-right:none}
+
+/* 第1栏 合肥天气 */
+.weather-col .weather-icon{font-size:52px;line-height:1}
+.weather-col .weather-temp{font-size:54px;font-weight:900;line-height:1.1}
+.weather-col .weather-sub{font-size:16px;color:var(--gray);font-weight:700;margin-top:6px}
+
+/* 第2-4栏 时间 HH : MM : SS */
+.time-col .time-num{font-size:72px;font-weight:900;line-height:1;letter-spacing:-2px;font-variant-numeric:tabular-nums}
+.time-col .time-label{font-size:16px;color:var(--gray);font-weight:700;margin-top:2px;text-transform:uppercase;letter-spacing:3px}
+
+/* 第5栏 早教主题 */
+.theme-col .theme-emoji-big{font-size:56px;line-height:1}
+.theme-col .theme-name-big{font-size:32px;font-weight:900;margin-top:6px}
+.theme-col .theme-tip-big{font-size:15px;color:var(--gray);font-weight:600;margin-top:8px;text-align:center;padding:0 8px}
+
+/* ═══════════ 三栏内容区 ═══════════ */
+.content-wrap{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  height:calc(75vh - 110px);gap:2px;padding:0 2px 2px;
+  max-width:1200px;margin:0 auto;
+}
+
+/* 板块 */
+.section{margin:0;overflow-y:auto;padding:6px 8px;border-radius:14px;background:var(--card);border:1px solid var(--border)}
+.section-title{font-size:20px;font-weight:900;margin-bottom:6px;display:flex;align-items:center;gap:8px;color:var(--green)}
+.sched-panel{grid-column:1 / 3;display:flex;flex-direction:column}
+.sched-panel .sched-list{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.sched-panel .sched-list .schedule-row:nth-child(odd){border-right:1px solid var(--border)}
+.sched-panel .sched-list .schedule-row:nth-child(even){border-right:none}
+.edu-panel{grid-column:3}
+
+/* 作息（桌面字体略大） */
+.schedule-row{display:flex;align-items:center;padding:6px 10px;border-bottom:1px solid var(--border);border-radius:8px;transition:all .3s}
+.schedule-row:last-child{border-bottom:none}
+.schedule-row.current{background:#0A4A1A;border-bottom-color:var(--green);box-shadow:inset 4px 0 0 var(--green);margin:2px -4px;padding:10px 14px;border-radius:12px}
+.schedule-time{font-size:24px;font-weight:900;color:var(--red);min-width:78px}
+.schedule-row.current .schedule-time{font-size:32px;font-weight:900}
+.schedule-tag{font-size:16px;padding:3px 9px;border-radius:10px;margin-right:10px;font-weight:800}
+.schedule-row.current .schedule-tag{font-size:18px;font-weight:900}
+.tag-eat{background:#3D1500;color:#FF8C42}
+.tag-sleep{background:#001A3D;color:var(--blue)}
+.tag-play{background:#002B1A;color:var(--green)}
+.tag-learn{background:#1A0033;color:#C084FC}
+.tag-care{background:#3D0000;color:#FF6B6B}
+.schedule-desc{font-size:22px;color:var(--white);flex:1;font-weight:700}
+.schedule-row.current .schedule-desc{font-size:26px;color:var(--green);font-weight:900}
+
+/* 早教 */
+.edu-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:6px}
+.edu-card:last-child{margin-bottom:0}
+.edu-card .edu-time{font-size:15px;color:var(--red);font-weight:900;letter-spacing:1px}
+.edu-card .edu-title{font-size:21px;font-weight:900;margin:3px 0;color:var(--white)}
+.edu-card .edu-detail{font-size:17px;color:#CCC;line-height:1.6;font-weight:600}
+.edu-card .edu-mats{font-size:15px;color:var(--gold);margin-top:4px;background:#2A2000;display:inline-block;padding:3px 10px;border-radius:9px;font-weight:800}
+
+/* 加载 */
+.loading{font-size:16px;animation:pulse 1.5s infinite;font-weight:700}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* 跑马灯 */
+.marquee-wrap{
+  width:100%;margin:0;padding:0 4px;
+  max-width:1200px;margin-left:auto;margin-right:auto;
+}
+.marquee-bar{
+  width:100%;height:100px;
+  background:var(--green);border-radius:14px;
+  overflow:hidden;display:flex;align-items:center;
+}
+.marquee-text{
+  white-space:nowrap;font-size:80px;font-weight:900;color:#FFD700;
+  animation:marquee 15s linear infinite;
+  padding-left:100%;
+  text-shadow:0 3px 6px rgba(0,0,0,.5);
+  letter-spacing:4px;
+}
+@keyframes marquee{
+  0%{transform:translateX(0)}
+  100%{transform:translateX(-100%)}
+}
+
+/* 闹铃弹窗 */
+.alarm-overlay{
+  position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,.92);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  animation:alarmPulse 1s infinite;
+}
+@keyframes alarmPulse{
+  0%,100%{background:rgba(0,0,0,.92)}
+  50%{background:rgba(60,10,10,.94)}
+}
+.alarm-emoji{font-size:120px;animation:alarmBounce .3s infinite alternate}
+@keyframes alarmBounce{from{transform:scale(1)}to{transform:scale(1.15)}}
+.alarm-title{font-size:64px;font-weight:900;color:#FF6B6B;margin:16px 0 8px;text-align:center}
+.alarm-sub{font-size:36px;color:#FFB347;font-weight:700;text-align:center}
+.alarm-btn{
+  margin-top:40px;padding:18px 60px;font-size:28px;font-weight:900;
+  background:var(--green);color:#000;border:none;border-radius:20px;cursor:pointer
+}
+</style>
+</head>
+<body>
+
+<!-- ════ 桌面顶部 5栏 ════ -->
+<div class="top-bar" id="wideTop">
+  <div class="top-col weather-col" id="weatherCol">
+    <span class="weather-icon" id="wIcon">☀️</span>
+    <span class="weather-temp" id="wTemp">28°</span>
+    <span class="weather-sub" id="wSub">合肥 · 晴</span>
+  </div>
+  <div class="top-col time-col">
+    <span class="time-num" id="hh">10</span>
+    <span class="time-label">时</span>
+  </div>
+  <div class="top-col time-col">
+    <span class="time-num" id="mm">55</span>
+    <span class="time-label">分</span>
+  </div>
+  <div class="top-col time-col">
+    <span class="time-num" id="ss">00</span>
+    <span class="time-label">秒</span>
+  </div>
+  <div class="top-col theme-col" id="themeCol">
+    <span class="theme-emoji-big" id="tEmoji">🌈</span>
+    <span class="theme-name-big" id="tName">颜色认知</span>
+    <span class="theme-tip-big" id="tTip">💡 多��认红色黄色</span>
+  </div>
+</div>
+
+<div class="content-wrap">
+  <div class="section sched-panel">
+    <div class="section-title">⏰ 今日作息</div>
+    <div class="sched-list" id="scheduleList"></div>
+  </div>
+  <div class="section edu-panel">
+    <div class="section-title" id="eduTitle">🎨 今日早教</div>
+    <div id="eduList"></div>
+  </div>
+</div>
+
+<div class="marquee-wrap" id="marqueeBar">
+  <div class="marquee-bar">
+    <span class="marquee-text" id="marqueeText">--</span>
+  </div>
+</div>
+
+<script>
+// ═══════════ 配置 ═══════════
+const LAT = 31.8206, LON = 117.2272, CITY = "合肥";
+const WEEKDAYS = ["周日","周一","周二","周三","周四","周五","周六"];
+const THEMES = [
+  {emoji:"🌈",name:"颜色认知",tip:"多指认红色和黄色物品"},
+  {emoji:"🐶",name:"动物世界",tip:"模仿叫声，看动物绘本"},
+  {emoji:"🦶",name:"认识身体",tip:"指认五官，唱身体儿歌"},
+  {emoji:"🎵",name:"音乐律动",tip:"敲节奏，跟着音乐摇摆"},
+  {emoji:"🌿",name:"自然探索",tip:"观察树叶花朵，触摸不同材质"},
+  {emoji:"🍽️",name:"生活技能",tip:"自己用勺子、收拾玩具"},
+  {emoji:"❤️",name:"亲子互动",tip:"躲猫猫、拥抱、一起读绘本"},
+];
+const WCODE = {0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌦️",53:"🌦️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"❄️",73:"❄️",75:"❄️",77:"❄️",80:"🌦️",81:"🌧️",82:"🌧️",85:"🌨️",86:"🌨️",95:"⛈️",96:"⛈️",99:"⛈️"};
+const WDESC = {0:"晴",1:"少云",2:"多云",3:"阴",45:"雾",48:"雾凇",51:"小阵雨",53:"阵雨",55:"大阵雨",61:"小雨",63:"中雨",65:"大雨",71:"小雪",73:"中雪",75:"大雪",77:"雪粒",80:"小阵雨",81:"中阵雨",82:"大阵雨",85:"小雪",86:"中雪",95:"雷雨",96:"冰雹雷雨",99:"大冰雹"};
+
+let weatherCache = null;
+
+// ═══════════ 桌面时钟（HH MM SS 独立）═══════════
+function updateWideClock() {
+  var n = new Date();
+  var elHh = document.getElementById("hh");
+  var elMm = document.getElementById("mm");
+  var elSs = document.getElementById("ss");
+  if (elHh) elHh.textContent = String(n.getHours()).padStart(2, "0");
+  if (elMm) elMm.textContent = String(n.getMinutes()).padStart(2, "0");
+  if (elSs) elSs.textContent = String(n.getSeconds()).padStart(2, "0");
+}
+
+// ═══════════ 天气 ═══════════
+async function fetchWeather() {
+  try {
+    var d = new Date();
+    var ds = d.toISOString().split("T")[0];
+    var url = "https://api.open-meteo.com/v1/forecast?latitude="+LAT+"&longitude="+LON+"&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&timezone=Asia/Shanghai&start_date="+ds+"&end_date="+ds;
+    var res = await fetch(url);
+    var data = await res.json();
+    var dw = data.daily;
+    weatherCache = {
+      max: dw.temperature_2m_max[0],
+      min: dw.temperature_2m_min[0],
+      code: dw.weathercode[0],
+      rain: dw.precipitation_probability_max[0] || 0,
+    };
+  } catch(e) {
+    weatherCache = {max:30,min:20,code:0,rain:0};
+  }
+  renderWeather();
+}
+
+function renderWeather() {
+  var w = weatherCache || {max:30,min:20,code:0,rain:0};
+  var icon = WCODE[w.code] || "☀️";
+  var desc = WDESC[w.code] || "晴";
+  var wic = document.getElementById("wIcon");
+  var wt = document.getElementById("wTemp");
+  var ws = document.getElementById("wSub");
+  if (wic) wic.textContent = icon;
+  if (wt) wt.textContent = Math.round(w.max) + "°";
+  if (ws) ws.textContent = CITY + " · " + desc + " · 💧" + w.rain + "%";
+}
+
+// ═══════════ 主题渲染 ═══════════
+function getDayIdx() { return (new Date().getDay() + 6) % 7; }
+function renderTheme() {
+  var t = THEMES[getDayIdx() % 7];
+  var te = document.getElementById("tEmoji");
+  var tn = document.getElementById("tName");
+  var tt = document.getElementById("tTip");
+  if (te) te.textContent = t.emoji;
+  if (tn) tn.textContent = t.name;
+  if (tt) tt.textContent = "💡 " + t.tip;
+  var et = document.getElementById("eduTitle");
+  if (et) et.innerHTML = t.emoji + " " + t.name + " · 今日早教";
+}
+
+// ═══════════ 作息（含动态早教）═══════════
+function getLearnActivity() {
+  var acts = [
+    "🎨 颜色认知 · 指认红黄蓝物品",
+    "🐶 动物世界 · 模仿叫声看绘本",
+    "🦶 认识身体 · 《头发肩膀膝盖脚》",
+    "🎵 音乐律动 · 敲节奏跟着摇摆",
+    "🌿 自然探索 · 收集树叶摸不同材质",
+    "🍽️ 生活技能 · 自己用勺收拾玩具",
+    "❤️ 亲子互动 · 躲猫猫读绘本拥抱",
+  ];
+  return acts[getDayIdx() % 7];
+}
+function getSchedule() {
+  return [
+    {t:"07:00",tag:"milk",cls:"tag-eat",d:"开胃奶 · 配方奶150ml · 漱口"},
+    {t:"08:40",tag:"bfast",cls:"tag-eat",d:"早餐 · 鸡蛋+馒头/粥/包子"},
+    {t:"09:30",tag:"play",cls:"tag-play",d:"户外活动 · 戴帽·带水·每20分钟喂水"},
+    {t:"12:00",tag:"lunch",cls:"tag-eat",d:"午餐 · 软饭半碗+肉菜+青菜"},
+    {t:"13:00",tag:"sleep",cls:"tag-sleep",d:"午睡 · 空调26-28°C · 盖薄巾"},
+    {t:"15:30",tag:"milk",cls:"tag-eat",d:"喝奶 · 配方奶160-200ml"},
+    {t:"16:00",tag:"play",cls:"tag-play",d:"户外活动 · 滑梯/散步 · 避开强光"},
+    {t:"18:30",tag:"dinner",cls:"tag-eat",d:"晚餐 · 面条/馄饨/软饭+蔬菜+肉末"},
+    {t:"20:00",tag:"care",cls:"tag-care",d:"洗澡 · 温水冲洗 · 浴后涂桃子水"},
+    {t:"21:00",tag:"milk",cls:"tag-eat",d:"睡前奶 · 配方奶150-190ml · 奶后漱口"},
+    {t:"21:30",tag:"sleep",cls:"tag-sleep",d:"入睡准备 · 换尿不湿·故事·关灯 💤"},
+  ];
+}
+
+function renderSchedule() {
+  var s = getSchedule();
+  var n = new Date();
+  var nowMin = n.getHours() * 60 + n.getMinutes();
+  var cur = -1;
+  for (var i = 0; i < s.length; i++) {
+    var hms = s[i].t.split(":");
+    var st = Number(hms[0]) * 60 + Number(hms[1]);
+    var nx = i + 1 < s.length ?
+      Number(s[i+1].t.split(":")[0]) * 60 + Number(s[i+1].t.split(":")[1]) : 24*60;
+    if (nowMin >= st && nowMin < nx) { cur = i; break; }
+  }
+  var ICON = {milk:"🍼", bfast:"🥚", lunch:"🦐", dinner:"🥬", sleep:"💤", play:"🌳", care:"🛁", learn:"📚"};
+  document.getElementById("scheduleList").innerHTML = s.map(function(r, i){
+    return '<div class="schedule-row'+(i===cur?' current':'')+'"><span class="schedule-time">'+r.t+'</span><span class="schedule-tag '+r.cls+'">'+(ICON[r.tag]||r.tag)+'</span><span class="schedule-desc">'+r.d+'</span></div>';
+  }).join("");
+}
+
+// ═══════════ 早教 ═══════════
+function getEdu() {
+  var all = [
+    [{time:"10:30",title:"🎨 颜色分类",detail:"红黄蓝积木/彩纸，同色放一起。",mats:"积木/彩纸"},{time:"15:00",title:"📖 颜色绘本",detail:"《棕色的熊》指认颜色。",mats:"绘本"},{time:"16:30",title:"🖍️ 手指画",detail:"可水洗颜料手指蘸色涂抹。",mats:"颜料+纸"}],
+    [{time:"10:30",title:"🐮 动物叫声",detail:"动物卡片模仿叫声，鼓励跟学。",mats:"动物卡片"},{time:"15:00",title:"📖 触摸书",detail:"《Dear Zoo》翻页摸材质。",mats:"触摸书"},{time:"16:30",title:"🏃 动物走",detail:"学小兔跳、小鸭摇、乌龟爬。",mats:"安全空间"}],
+    [{time:"10:30",title:"👃 指认五官",detail:"唱《头发肩膀膝盖脚》边唱边指。",mats:"镜子"},{time:"15:00",title:"🖐️ 手脚印画",detail:"颜料印手印脚印对比大小。",mats:"颜料+纸"},{time:"16:30",title:"📖 身体绘本",detail:"《从头动到脚》模仿动作。",mats:"绘本"}],
+    [{time:"10:30",title:"🥁 敲击节奏",detail:"木勺敲锅碗瓢盆模仿节奏。",mats:"木勺+锅"},{time:"15:00",title:"💃 音乐舞",detail:"《小星星》抱着摇摆转圈。",mats:"播放器"},{time:"16:30",title:"🎤 念儿歌",detail:"《小白兔》表情夸张手势配合。",mats:"文本"}],
+    [{time:"10:30",title:"🍃 户外寻宝",detail:"收集树叶石子花瓣说出名字。",mats:"小篮"},{time:"15:00",title:"💧 玩水",detail:"盆里温水+杯子倒来倒去。",mats:"盆+杯"},{time:"16:30",title:"📖 自然绘本",detail:"《好饿的毛毛虫》蝴蝶生命。",mats:"绘本"}],
+    [{time:"10:30",title:"🥄 自己吃饭",detail:"安全勺+小泡芙练习舀。",mats:"勺+碗+泡芙"},{time:"15:00",title:"🧸 收拾玩具",detail:"「小熊回家啦」培养收纳。",mats:"玩具+箱"},{time:"16:30",title:"👟 穿脱练习",detail:"脱袜子穿鞋不催促。",mats:"鞋袜"}],
+    [{time:"10:30",title:"🙈 躲猫猫",detail:"纱巾盖脸掀开或躲门后。",mats:"纱巾"},{time:"15:00",title:"🤗 感官袋",detail:"密封袋装水+亮片捏拍。",mats:"密封袋"},{time:"16:30",title:"📖 亲子共读",detail:"抱读最爱绘本，读完拥抱。",mats:"最爱绘本"}],
+  ];
+  return all[getDayIdx() % 7];
+}
+
+function renderEdu() {
+  document.getElementById("eduList").innerHTML = getEdu().map(function(a){
+    return '<div class="edu-card"><div class="edu-time">🕐 '+a.time+'</div><div class="edu-title">'+a.title+'</div><div class="edu-detail">'+a.detail+'</div><div class="edu-mats">📦 '+a.mats+'</div></div>';
+  }).join("");
+}
+
+// ═══════════ 跑马灯 ═══════════
+var TAG_CN = {milk:"🍼", bfast:"🥚", lunch:"🦐", dinner:"🥬", care:"🧴", play:"🎯", learn:"📚", sleep:"💤"};
+
+function updateMarquee() {
+  var s = getSchedule();
+  var n = new Date();
+  var nowMin = n.getHours() * 60 + n.getMinutes();
+  var cur = s[s.length - 1];
+  for (var i = 0; i < s.length; i++) {
+    var hms = s[i].t.split(":");
+    var st = Number(hms[0]) * 60 + Number(hms[1]);
+    var nx = i + 1 < s.length ?
+      Number(s[i+1].t.split(":")[0]) * 60 + Number(s[i+1].t.split(":")[1]) : 24*60;
+    if (nowMin >= st && nowMin < nx) { cur = s[i]; break; }
+  }
+  var t = THEMES[getDayIdx() % 7];
+  var label = TAG_CN[cur.tag] || cur.tag;
+  var desc = cur.d;
+  if (cur.tag === "learn") {
+    desc = t.emoji + " " + t.name + " · " + cur.d.replace("（见右栏）","");
+  }
+  var el = document.getElementById("marqueeText");
+  if (el) el.textContent = "▶ " + cur.t + "  " + label + "  " + desc + "  ◀     ▶ " + cur.t + "  " + label + "  " + desc + "  ◀";
+}
+
+// ═══════════ 启动 ═══════════
+function renderAll() {
+  updateWideClock();
+  renderTheme();
+  renderSchedule();
+  renderEdu();
+  updateMarquee();
+}
+
+renderAll();
+fetchWeather();
+
+// ═══════════ 14:50 午睡闹铃 ═══════════
+var alarmFired = false;
+var alarmAudio = null;
+
+function checkAlarm() {
+  var n = new Date();
+  var h = n.getHours(), m = n.getMinutes(), s = n.getSeconds();
+  if (h === 14 && m === 50 && s >= 0 && s < 10 && !alarmFired) {
+    alarmFired = true;
+    showAlarm();
+  }
+  if (h === 0 && m === 0 && s < 5) alarmFired = false;
+}
+
+function beepAlarm(duration) {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var start = ctx.currentTime;
+    var end = start + duration;
+    var t = start;
+    while (t < end) {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = "square";
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.3, t);
+      gain.gain.setValueAtTime(0, t + 0.18);
+      gain.gain.setValueAtTime(0, t + 0.25);
+      gain.gain.setValueAtTime(0.3, t + 0.25);
+      gain.gain.setValueAtTime(0, t + 0.38);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.4);
+      t += 0.4;
+    }
+    alarmAudio = ctx;
+  } catch(e) { /* iOS 自动播放限制，静默失败 */ }
+}
+
+function speakChinese(text, times, interval) {
+  try {
+    if (!window.speechSynthesis) return;
+    function say(remaining) {
+      if (remaining <= 0) return;
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = "zh-CN";
+      u.rate = 0.85;
+      u.pitch = 1.1;
+      u.volume = 1;
+      u.onend = function() { setTimeout(function(){ say(remaining - 1); }, interval); };
+      speechSynthesis.speak(u);
+    }
+    say(times);
+  } catch(e) { /* 不支持 TTS，静默跳过 */ }
+}
+
+function stopAlarm() {
+  if (alarmAudio) { alarmAudio.close(); alarmAudio = null; }
+  if (window.speechSynthesis) speechSynthesis.cancel();
+}
+
+function showAlarm() {
+  var div = document.createElement("div");
+  div.className = "alarm-overlay";
+  div.innerHTML = '<span class="alarm-emoji">⏰</span><span class="alarm-title">宝宝该起床啦！</span><span class="alarm-sub">下午点心 · 温水 🍼</span><button class="alarm-btn" id="dismissBtn">知道了 👌</button>';
+  
+  function dismiss() {
+    stopAlarm();
+    if (div.parentElement) div.remove();
+  }
+  div.onclick = dismiss;
+  document.body.appendChild(div);
+  document.getElementById("dismissBtn").onclick = function(e){ e.stopPropagation(); dismiss(); };
+
+  beepAlarm(15);
+  setTimeout(function(){ speakChinese("一苇 二杭起床了", 3, 2000); }, 300);
+
+  setTimeout(function(){ dismiss(); }, 30000);
+}
+
+// ═══════════ 语音提醒 ═══════════
+var remindLastDate = "";
+var remindFired = {};
+
+function checkReminders() {
+  var n = new Date();
+  var h = n.getHours(), m = n.getMinutes(), s = n.getSeconds();
+  var today = n.getFullYear()+"-"+("0"+(n.getMonth()+1)).slice(-2)+"-"+("0"+n.getDate()).slice(-2);
+  if (today !== remindLastDate) { remindFired = {}; remindLastDate = today; }
+  
+  var reminders = [
+    {at:[6,55], text:"一苇、二杭 喝奶了",  tag:"milk1"},
+    {at:[8,20], text:"一苇、二杭 吃饭了", tag:"bfast"},
+    {at:[11,40],text:"一苇、二杭 吃饭了", tag:"lunch"},
+    {at:[12,50],text:"一苇、二杭 睡觉了", tag:"nap"},
+    {at:[15,25],text:"一苇、二杭 喝奶了",  tag:"milk2"},
+    {at:[18,10],text:"一苇、二杭 吃饭了", tag:"dinner"},
+    {at:[20,55],text:"一苇、二杭 喝奶了",  tag:"milk3"},
+    {at:[21,20],text:"一苇、二杭 睡觉了", tag:"sleep"},
+  ];
+  
+  for (var i = 0; i < reminders.length; i++) {
+    var r = reminders[i];
+    if (h === r.at[0] && m === r.at[1] && s >= 0 && s < 10 && !remindFired[r.tag]) {
+      remindFired[r.tag] = true;
+      speakChinese(r.text, 3, 6000);
+    }
+  }
+}
+
+setInterval(function(){ 
+  updateWideClock(); checkAlarm(); checkReminders();
+}, 1000);
+setInterval(renderSchedule, 30000);
+setInterval(updateMarquee, 30000);
+
+// iOS Safari 语音解锁
+document.addEventListener("touchstart", function iosUnlock(){
+  try {
+    var u = new SpeechSynthesisUtterance("");
+    u.volume = 0; u.lang = "zh-CN";
+    speechSynthesis.speak(u);
+  } catch(e) {}
+  document.removeEventListener("touchstart", iosUnlock);
+}, {once: true});
+</script>
+</body>
+</html>
