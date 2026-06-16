@@ -16,6 +16,10 @@
   --red:#FF4444;--green:#4ADE80;--gold:#FACC15;--blue:#60A5FA;
   --white:#FFFFFF;--gray:#999;--border:#333;
 }
+/* 白天模式（6:00-22:00）*/
+body.day-mode{--bg:#111;--card:#1E1E1E;--card2:#282828;--border:#3A3A3A}
+/* 夜间模式（22:00-6:00）*/
+body.night-mode{--bg:#020202;--card:#0A0A0A;--card2:#0F0F0F;--border:#1A1A1A;zoom:1}
 *{margin:0;padding:0;box-sizing:border-box}
 body{
   font-family:-apple-system,"PingFang SC","Hiragino Sans GB",sans-serif;
@@ -24,6 +28,28 @@ body{
   -webkit-font-smoothing:antialiased;user-select:none;
   zoom:0.75;
 }
+
+/* ═══════════ 夜间模式：只显示温度+时间 ═══════════ */
+.night-only{display:none}
+body.night-mode .night-only{display:flex}
+body.night-mode .day-only{display:none}
+body.night-mode .marquee-wrap{display:none}
+body.night-mode .signature{display:none}
+.night-screen{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:100vw;height:100vh;
+}
+.night-temp{
+  font-size:min(28vw,28vh,260px);font-weight:900;line-height:1;
+  color:#CCC;opacity:0.7;
+}
+.night-temp .unit{font-size:0.35em;font-weight:700;color:#666}
+.night-time{
+  font-size:min(22vw,22vh,200px);font-weight:900;line-height:1.1;
+  color:#555;margin-top:0.05em;letter-spacing:4px;
+}
+.night-weather-label{font-size:min(4vw,4vh,36px);color:#444;margin-top:0.8em;font-weight:700}
+.night-city{font-size:min(2.5vw,2.5vh,22px);color:#333;margin-top:0.5em;font-weight:600}
 
 /* 顶部超大时间 + 天气 */
 .top-bar{
@@ -246,10 +272,18 @@ body{
 }
 </style>
 </head>
-<body>
+<body class="day-mode">
+
+<!-- ════ 夜间模式：只显示温度+时间 ════ -->
+<div class="night-only night-screen" id="nightScreen">
+  <div class="night-temp" id="nightTemp">--°</div>
+  <div class="night-time" id="nightTime">00:00</div>
+  <div class="night-weather-label" id="nightWeatherLabel">--</div>
+  <div class="night-city">合肥 · 庐阳</div>
+</div>
 
 <!-- ════ 横屏顶部 5栏 ════ -->
-<div class="top-bar wide-only" id="wideTop">
+<div class="top-bar wide-only day-only" id="wideTop">
   <div class="top-col weather-col" id="weatherCol">
     <span class="weather-icon" id="wIcon">☀️</span>
     <span class="weather-temp" id="wTemp">28°</span>
@@ -275,7 +309,7 @@ body{
 </div>
 
 <!-- ════ 竖屏顶部（居中布局）═══ -->
-<div class="top-bar vert-only" id="vertTop">
+<div class="top-bar vert-only day-only" id="vertTop">
   <div class="clock-wrap">
     <span class="clock" id="liveClock">10:44</span>
   </div>
@@ -288,9 +322,9 @@ body{
 </div>
 
 <!-- ════ 竖屏主题条 ════ -->
-<div class="theme-strip vert-only" id="themeStrip"></div>
+<div class="theme-strip vert-only day-only" id="themeStrip"></div>
 
-<div class="content-wrap">
+<div class="content-wrap day-only">
   <div class="section sched-panel">
     <div class="section-title">⏰ 今日作息</div>
     <div class="sched-list" id="scheduleList"></div>
@@ -311,7 +345,7 @@ body{
 
 <script>
 // ═══════════ 配置 ═══════════
-const LAT = 31.8206, LON = 117.2272, CITY = "合肥";
+const LAT = 31.878, LON = 117.265, CITY = "合肥·庐阳";
 const WEEKDAYS = ["周日","周一","周二","周三","周四","周五","周六"];
 const THEMES = [
   {emoji:"🌈",name:"颜色认知",tip:"多指认红色和黄色物品"},
@@ -352,37 +386,46 @@ async function fetchWeather() {
   try {
     var d = new Date();
     var ds = d.toISOString().split("T")[0];
-    var url = "https://api.open-meteo.com/v1/forecast?latitude="+LAT+"&longitude="+LON+"&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&timezone=Asia/Shanghai&start_date="+ds+"&end_date="+ds;
+    var url = "https://api.open-meteo.com/v1/forecast?latitude="+LAT+"&longitude="+LON+"&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&current_weather=true&timezone=Asia/Shanghai&start_date="+ds+"&end_date="+ds;
     var res = await fetch(url);
     var data = await res.json();
     var dw = data.daily;
+    var cw = data.current_weather || {};
     weatherCache = {
       max: dw.temperature_2m_max[0],
       min: dw.temperature_2m_min[0],
       code: dw.weathercode[0],
       rain: dw.precipitation_probability_max[0] || 0,
+      now: cw.temperature !== undefined ? Math.round(cw.temperature) : null,
     };
   } catch(e) {
-    weatherCache = {max:30,min:20,code:0,rain:0};
+    weatherCache = {max:30,min:20,code:0,rain:0,now:25};
   }
   renderWeather();
+  updateNightScreen();
 }
 
 function renderWeather() {
-  var w = weatherCache || {max:30,min:20,code:0,rain:0};
+  var w = weatherCache || {max:30,min:20,code:0,rain:0,now:null};
   var icon = WCODE[w.code] || "☀️";
   var desc = WDESC[w.code] || "晴";
-  // 竖屏
-  var wi = document.getElementById("weatherInline");
-  var wd = document.getElementById("weatherDetail");
-  if (wi) wi.innerHTML = icon + " " + Math.round(w.max) + "° / " + Math.round(w.min) + "°";
-  if (wd) wd.textContent = desc + " · 降水 " + w.rain + "% · " + CITY;
-  // 横屏
+  var nowStr = (w.now !== null && w.now !== undefined) ? Math.round(w.now)+"° " : "";
+  document.getElementById("weatherInline").innerHTML = 
+    `${icon} ${nowStr}${Math.round(w.max)}° / ${Math.round(w.min)}°`;
+  document.getElementById("weatherDetail").textContent = 
+    `${desc} · 降水 ${w.rain}% · ${CITY}`;
+  // 横屏天气栏
+  var wi2 = document.getElementById("weatherInlineWide");
+  if (wi2) wi2.innerHTML = `${icon} ${nowStr}${Math.round(w.max)}° / ${Math.round(w.min)}°`;
+  // 宽屏 column5（竖屏横放顶部天气列）
+  var c5 = document.getElementById("col5wx");
+  if (c5) c5.innerHTML = `${icon}<br>${nowStr}${Math.round(w.max)}° / ${Math.round(w.min)}°`;
+  // 旧版顶部横屏三元素兼容
   var wic = document.getElementById("wIcon");
   var wt = document.getElementById("wTemp");
   var ws = document.getElementById("wSub");
   if (wic) wic.textContent = icon;
-  if (wt) wt.textContent = Math.round(w.max) + "°";
+  if (wt) wt.textContent = nowStr + Math.round(w.max) + "° / " + Math.round(w.min) + "°";
   if (ws) ws.textContent = CITY + " · " + desc + " · 💧" + w.rain + "%";
 }
 
@@ -402,16 +445,6 @@ function renderTheme() {
   if (te) te.textContent = t.emoji;
   if (tn) tn.textContent = t.name;
   if (tt) tt.textContent = "💡 " + t.tip;
-}
-
-function renderWeather() {
-  const w = weatherCache || {max:30,min:20,code:0,rain:0};
-  const icon = WCODE[w.code] || "☀️";
-  const desc = WDESC[w.code] || "晴";
-  document.getElementById("weatherInline").innerHTML = 
-    `${icon} ${Math.round(w.max)}° / ${Math.round(w.min)}°`;
-  document.getElementById("weatherDetail").textContent = 
-    `${desc} · 降水 ${w.rain}% · ${CITY}`;
 }
 
 // ═══════════ 作息 ═══════════
@@ -635,11 +668,53 @@ function checkReminders() {
   }
 }
 
+// ═══════════ 夜间模式检测 ═══════════
+function qs(id){return document.getElementById(id);}
+function checkNightMode(d) {
+  d = d || new Date();
+  var h = d.getHours();
+  var isNight = (h >= 22 || h < 6);
+  if (isNight) {
+    document.body.classList.add("night-mode");
+    document.body.classList.remove("day-mode");
+  } else {
+    document.body.classList.add("day-mode");
+    document.body.classList.remove("night-mode");
+    // 白天刷新夜间预热数据
+    updateNightScreen();
+  }
+  return isNight;
+}
+
+// ═══════════ 更新夜间屏幕 ═══════════
+function updateNightScreen() {
+  var d = new Date();
+  var h = d.getHours(), m = d.getMinutes();
+  var ts = String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+  qs("#nightTime").textContent = ts;
+  if (weatherCache && weatherCache.now !== null && weatherCache.now !== undefined) {
+    qs("#nightTemp").innerHTML = weatherCache.now + "°";
+  } else if (weatherCache) {
+    // 没有实时温度时用最高最低的平均值
+    var avg = Math.round((weatherCache.max + weatherCache.min) / 2);
+    qs("#nightTemp").innerHTML = avg + "°";
+  }
+  if (weatherCache && weatherCache.code !== undefined) {
+    qs("#nightWeatherLabel").textContent = WDESC[weatherCache.code] || "晴";
+  }
+}
+
+// 初始化夜间模式
+checkNightMode();
+if (weatherCache && weatherCache.max) updateNightScreen();
+
 setInterval(function(){ 
   updateWideClock(); updateVertClock(); checkAlarm(); checkReminders();
+  checkNightMode(); updateNightScreen();
 }, 1000);
 setInterval(renderSchedule, 30000);
 setInterval(updateMarquee, 30000);
+setInterval(fetchWeather, 600000); // 每10分钟刷新天气
 
 // iOS Safari 语音解锁：首次触摸页面时激活 speechSynthesis
 document.addEventListener("touchstart", function iosUnlock(){
