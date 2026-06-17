@@ -183,8 +183,9 @@ body.night-mode .signature{display:none}
 @media (max-width:767px) {
   /* 手机：顶部时间固定 · 中间作息滚动 · 底部跑马灯固定 */
   body{
+    position:fixed;top:0;left:0;right:0;bottom:0;
     display:flex;flex-direction:column;
-    height:100dvh;overflow:hidden;padding:0;
+    overflow:hidden;padding:0;
   }
   .top-bar{
     position:static;flex-shrink:0;padding:4px 12px 2px;
