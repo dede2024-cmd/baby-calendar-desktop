@@ -437,6 +437,53 @@ function updateMarquee(nowHour, nowMin) {
   el.textContent = "⏰ 现在是 " + s.time + " " + tm[0] + " " + s.task + " —— 下一个：" + (cur < schedule.length - 1 ? schedule[cur + 1].time + " " + schedule[cur + 1].task : "新的一天开始啦！");
 }
 
+// ========== 语音提醒 ==========
+var remindLastDate = "";
+var remindFired = {};
+
+function speakChinese(text, times, interval) {
+  try {
+    if (!window.speechSynthesis) return;
+    function say(remaining) {
+      if (remaining <= 0) return;
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = "zh-CN";
+      u.rate = 0.85;
+      u.pitch = 1.1;
+      u.volume = 1;
+      u.onend = function() { setTimeout(function(){ say(remaining - 1); }, interval); };
+      speechSynthesis.speak(u);
+    }
+    say(times);
+  } catch(e) { /* 不支持 TTS，静默跳过 */ }
+}
+
+function checkReminders() {
+  var n = new Date();
+  var h = n.getHours(), m = n.getMinutes(), s = n.getSeconds();
+  var today = n.getFullYear() + "-" + pad2(n.getMonth()+1) + "-" + pad2(n.getDate());
+  if (today !== remindLastDate) { remindFired = {}; remindLastDate = today; }
+
+  var reminders = [
+    { at: [6,55],  text: "一苇、二杭 喝奶了",  tag: "milk1" },
+    { at: [8,20],  text: "一苇、二杭 吃饭了",  tag: "bfast" },
+    { at: [11,40], text: "一苇、二杭 吃饭了",  tag: "lunch" },
+    { at: [12,50], text: "一苇、二杭 睡觉了",  tag: "nap" },
+    { at: [15,25], text: "一苇、二杭 喝奶了",  tag: "milk2" },
+    { at: [18,10], text: "一苇、二杭 吃饭了",  tag: "dinner" },
+    { at: [20,55], text: "一苇、二杭 喝奶了",  tag: "milk3" },
+    { at: [21,20], text: "一苇、二杭 睡觉了",  tag: "sleep" }
+  ];
+
+  for (var i = 0; i < reminders.length; i++) {
+    var r = reminders[i];
+    if (h === r.at[0] && m === r.at[1] && s >= 0 && s < 10 && !remindFired[r.tag]) {
+      remindFired[r.tag] = true;
+      speakChinese(r.text, 3, 6000);
+    }
+  }
+}
+
 // ========== 主更新 ==========
 function update() {
   var now = new Date();
@@ -497,7 +544,17 @@ checkNightMode();
 update();
 fetchWeather();
 
-setInterval(update, 1000);
+setInterval(function() { update(); checkReminders(); }, 1000);
 setInterval(fetchWeather, 600000);
+
+// iOS Safari 语音解锁：首次触摸页面时激活 speechSynthesis
+document.addEventListener("touchstart", function iosUnlock() {
+  try {
+    var u = new SpeechSynthesisUtterance("");
+    u.volume = 0; u.lang = "zh-CN";
+    speechSynthesis.speak(u);
+  } catch(e) {}
+  document.removeEventListener("touchstart", iosUnlock);
+}, { once: true });
 </script>
 </body></html>
