@@ -2,254 +2,239 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Y W &amp; E H · 今日看护</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<!-- v20260617-ipad2-dark -->
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  font-family: "Heiti SC", "STHeiti", "PingFang SC", sans-serif;
-  background: #fffdf7;
-  color: #3a3a3a;
-  width: 1024px; height: 768px;
-  overflow: hidden;
-}
+/* ====== 基础 ====== */
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0A0A0A;color:#EEE;font-family:-apple-system,'Helvetica Neue',sans-serif;
+  width:100vw;height:100vh;overflow:hidden}
 
-/* === 夜间模式 === */
-body.night-mode { background: #050505; }
-body.night-mode .day-content { display: none; }
-body.night-mode .night-content { display: block; }
-.night-content { display: none; }
-.night-wrap {
-  width: 1024px; height: 768px;
-  display: table;
-}
-.night-wrap > div {
-  display: table-cell;
-  vertical-align: middle;
-  text-align: center;
-}
-.night-temp {
-  font-size: 220px; font-weight: 900; line-height: 1;
-  color: #333;
-}
-.night-time {
-  font-size: 140px; font-weight: 900; line-height: 1.2;
-  color: #222; letter-spacing: 8px; margin-top: 10px;
-}
-.night-label {
-  font-size: 30px; color: #2a2a2a; margin-top: 20px;
-}
-.night-city {
-  font-size: 22px; color: #1a1a1a; margin-top: 8px;
-}
+/* ====== 深色配色（硬编码，无 CSS 变量） ====== */
+.c-bg{background:#0A0A0A}
+.c-card{background:#1A1A1A}
+.c-border{border-color:#1F1F1F}
+.c-red{color:#FF4444}
+.c-green{color:#4ADE80}
+.c-gold{color:#FACC15}
+.c-blue{color:#60A5FA}
+.c-gray{color:#888}
+.c-white{color:#EEE}
 
-/* === 顶部时间栏 === */
-.topbar {
-  height: 90px;
-  background: linear-gradient(135deg, #fdf2f8 0%, #ede9fe 100%);
-  border-bottom: 2px solid #d8b4fe;
-  display: table;
-  width: 100%;
-  table-layout: fixed;
-}
-.topbar > div {
-  display: table-cell;
-  vertical-align: middle;
-  text-align: center;
-}
-.topbar .clock {
-  font-size: 56px;
-  font-weight: bold;
-  color: #7c3aed;
-  letter-spacing: 3px;
-}
-.topbar .weather {
-  font-size: 28px;
-  color: #4b5563;
-  line-height: 1.3;
-}
-.topbar .weather .wnow {
-  font-size: 38px; font-weight: bold; color: #2563eb;
-}
-.topbar .weather .whl {
-  font-size: 20px; color: #6b7280; display: block;
-}
-.topbar .date {
-  font-size: 26px;
-  color: #6b7280;
-}
-.topbar .weekday {
-  font-size: 28px;
-  font-weight: bold;
-  color: #db2777;
-  padding: 6px 18px;
-  background: #fce7f3;
-  border-radius: 18px;
-  display: inline-block;
-}
+/* ====== 夜间模式 ====== */
+.night-screen{display:none;position:fixed;inset:0;z-index:9999;background:#050505;
+  text-align:center}
+body.night-mode .night-screen{display:block}
+body.night-mode .day-content{display:none}
+.night-temp{font-size:160px;font-weight:900;color:#FFF;line-height:1;margin-top:12vh}
+.night-time{font-size:72px;font-weight:900;color:#FACC15;margin-top:20px}
+.night-label{font-size:36px;color:#888;margin-top:16px}
+.night-city{font-size:24px;color:#555;margin-top:12px}
 
-/* === 当前任务区 === */
-.now-section {
-  height: 120px;
-  display: table;
-  width: 100%;
-  background: #f5f3ff;
-}
-.now-section .now-label {
-  display: table-cell;
-  width: 160px;
-  vertical-align: middle;
-  text-align: center;
-  font-size: 24px;
-  color: #6b7280;
-  letter-spacing: 6px;
-}
-.now-section .now-task {
-  display: table-cell;
-  vertical-align: middle;
-  font-size: 40px;
-  font-weight: bold;
-  color: #4c1d95;
-  padding-right: 30px;
-}
-.now-section .now-tip {
-  font-size: 20px;
-  font-weight: normal;
-  color: #7c3aed;
-  display: block;
-  margin-top: 4px;
-}
+/* ====== 白天内容容器 ====== */
+.day-content{height:100vh;display:table;width:100%;table-layout:fixed}
+.day-content-inner{display:table-cell;vertical-align:top;padding:4px 6px}
 
-/* === 双栏主区域 === */
-.main {
-  height: 458px;
-  display: table;
-  width: 100%;
-  table-layout: fixed;
-}
-.main > div {
-  display: table-cell;
-  vertical-align: top;
-  padding: 10px 14px;
-}
-.schedule-col {
-  width: 520px;
-  border-right: 1px solid #e5e7eb;
-}
-.schedule-col h3 {
-  font-size: 24px;
-  color: #2563eb;
-  margin-bottom: 6px;
-}
-.schedule-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 19px;
-}
-.schedule-table td {
-  padding: 4px 6px;
-  border-bottom: 1px solid #f3f4f6;
-}
-.schedule-table .time-cell { width: 120px; font-weight: bold; color: #4b5563; }
-.schedule-table .task-cell { width: 280px; color: #1f2937; }
-.schedule-table .type-cell { width: 80px; text-align: center; font-size: 15px; }
-.schedule-table tr.highlight { background: #ede9fe; border-radius: 6px; }
-.schedule-table tr.highlight td { font-weight: bold; color: #5b21b6; }
-.edu-col { width: 480px; }
-.edu-col h3 { font-size: 24px; color: #7c3aed; margin-bottom: 6px; }
-.edu-theme {
-  background: #f5f3ff;
-  border: 2px solid #c4b5fd;
-  border-radius: 12px;
-  padding: 12px 14px;
-  margin-bottom: 8px;
-}
-.edu-theme .theme-title { font-size: 30px; font-weight: bold; color: #5b21b6; }
-.edu-theme .theme-ability { font-size: 18px; color: #7c3aed; margin-top: 3px; }
-.edu-activities { margin-top: 8px; }
-.edu-activities .act-item { font-size: 18px; padding: 4px 0; border-bottom: 1px dotted #e5e7eb; }
-.edu-activities .act-label { color: #7c3aed; font-weight: bold; }
+/* ====== 顶部栏（横屏：weather | HH | MM | SS | theme）====== */
+.top-bar{width:100%;margin-bottom:2px}
+.top-row{width:100%;display:table;table-layout:fixed}
+.top-row>div{display:table-cell;vertical-align:middle;text-align:center;padding:4px 2px}
 
-/* === 底部状态栏 === */
-.bottombar {
-  height: 100px;
-  background: #f9fafb;
-  border-top: 1px solid #e5e7eb;
-  display: table;
-  width: 100%;
-  table-layout: fixed;
-  font-size: 20px;
-  color: #9ca3af;
-}
-.bottombar > div { display: table-cell; vertical-align: middle; text-align: center; }
+/* 天气栏 */
+.weather-col .w-icon{font-size:40px;line-height:1}
+.weather-col .w-temp{font-size:42px;font-weight:900;color:#FFF;line-height:1.1}
+.weather-col .w-hl{font-size:14px;color:#888;font-weight:700;margin-top:2px}
+.weather-col .w-detail{font-size:13px;color:#666;margin-top:2px}
+
+/* 时间栏 */
+.time-col .t-num{font-size:110px;font-weight:900;color:#FFF;line-height:1;font-variant-numeric:tabular-nums}
+.time-col .t-label{font-size:14px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:2px}
+
+/* 主题栏 */
+.theme-col .t-emoji{font-size:44px;line-height:1}
+.theme-col .t-name{font-size:26px;font-weight:900;color:#EEE;margin-top:4px}
+.theme-col .t-tip{font-size:14px;color:#888;font-weight:600;margin-top:4px;padding:0 4px}
+
+/* ====== 下方双栏 ====== */
+.main-area{width:100%;margin-top:2px}
+.main-table{width:100%;display:table;table-layout:fixed}
+.main-table>div{display:table-cell;vertical-align:top}
+
+/* 作息栏 */
+.sched-col{padding-right:8px;border-right:1px solid #1F1F1F}
+.sched-col .sec-title{font-size:20px;font-weight:900;color:#4ADE80;margin-bottom:6px}
+.sched-list{overflow-y:auto}
+.sched-row{display:table;width:100%;padding:4px 6px;border-bottom:1px solid #1A1A1A;border-radius:6px}
+.sched-row.cur{background:#0A4A1A;border-bottom-color:#4ADE80;box-shadow:inset 3px 0 0 #4ADE80;padding:8px 8px;margin:1px -2px;border-radius:10px}
+.sched-time{display:table-cell;font-size:20px;font-weight:900;color:#FF4444;min-width:68px;vertical-align:middle}
+.sched-row.cur .sched-time{font-size:28px;color:#FF8888}
+.sched-tag{display:table-cell;font-size:13px;padding:2px 6px;border-radius:8px;vertical-align:middle;text-align:center;width:44px;font-weight:800}
+.sched-desc{display:table-cell;font-size:18px;color:#EEE;vertical-align:middle;padding-left:8px;font-weight:700}
+.sched-row.cur .sched-desc{font-size:22px;color:#4ADE80;font-weight:900}
+.sched-row.cur .sched-tag{font-size:15px;font-weight:900}
 
 /* 标签 */
-.tag-red    { background: #fee2e2; color: #dc2626; border-radius: 4px; padding: 2px 6px; font-weight: bold; }
-.tag-yellow { background: #fef3c7; color: #d97706; border-radius: 4px; padding: 2px 6px; font-weight: bold; }
-.tag-green  { background: #d1fae5; color: #059669; border-radius: 4px; padding: 2px 6px; font-weight: bold; }
-.tag-purple { background: #ede9fe; color: #7c3aed; border-radius: 4px; padding: 2px 6px; font-weight: bold; }
+.tag-eat{background:#3D1500;color:#FF8C42}
+.tag-sleep{background:#001A3D;color:#60A5FA}
+.tag-play{background:#002B1A;color:#4ADE80}
+.tag-learn{background:#1A0033;color:#C084FC}
+.tag-care{background:#3D0000;color:#FF6B6B}
+
+/* 早教栏 */
+.edu-col{padding-left:8px}
+.edu-col .sec-title{font-size:20px;font-weight:900;color:#60A5FA;margin-bottom:6px}
+.edu-card{background:#1A1A1A;border:1px solid #1F1F1F;border-radius:10px;padding:10px 12px;margin-bottom:5px}
+.edu-card .e-time{font-size:13px;color:#FF4444;font-weight:900;letter-spacing:1px}
+.edu-card .e-title{font-size:18px;font-weight:900;margin:3px 0;color:#EEE}
+.edu-card .e-detail{font-size:14px;color:#AAA;line-height:1.5;font-weight:600}
+.edu-card .e-mats{font-size:12px;color:#FACC15;margin-top:3px;background:#2A2000;display:inline-block;padding:2px 8px;border-radius:6px;font-weight:800}
+
+/* ====== 跑马灯 ====== */
+.marquee-wrap{width:100%;margin-top:4px}
+.marquee-bar{width:100%;height:60px;background:#4ADE80;border-radius:10px;overflow:hidden;white-space:nowrap}
+.marquee-text{font-size:40px;font-weight:900;color:#1A1A1A;line-height:60px;display:inline-block;padding-left:100%;animation:marquee 12s linear infinite;letter-spacing:3px}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
+
+/* ====== 署名 ====== */
+.signature{position:fixed;bottom:8px;right:14px;font-size:13px;color:#444;font-weight:700;z-index:100;pointer-events:none}
+
+/* ====== 竖屏（宽度 < 768 或竖屏）====== */
+@media (max-width:767px), (orientation:portrait) {
+  .wide-only{display:none}
+  .vert-top{text-align:center;padding:8px 12px 4px}
+  .vert-clock{font-size:80px;font-weight:900;color:#FFF;line-height:1}
+  .vert-info{font-size:16px;color:#888;margin-top:4px}
+  .vert-weather{font-size:15px;color:#888;margin-top:2px}
+  .vert-theme{text-align:center;padding:6px 12px;margin:0 6px 2px;background:#1A1A1A;border:1px solid #1F1F1F;border-radius:10px}
+  .vert-theme .vt-emoji{font-size:36px}
+  .vert-theme .vt-name{font-size:24px;font-weight:900;color:#EEE}
+  .vert-theme .vt-tip{font-size:14px;color:#888;font-weight:600;margin-top:2px}
+  .content-area{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 6px}
+  .content-area .sched-col{border-right:none;margin-bottom:6px}
+  .content-area .sched-col,.content-area .edu-col{display:block;width:100%;padding:0}
+  .sched-time{font-size:16px;min-width:54px}
+  .sched-desc{font-size:14px}
+  .sched-row.cur .sched-time{font-size:20px}
+  .sched-row.cur .sched-desc{font-size:16px}
+  .marquee-bar{height:50px}
+  .marquee-text{font-size:30px;line-height:50px}
+  .signature{bottom:56px;right:10px;font-size:11px}
+}
+
+/* ====== 横屏（宽 ≥ 768 且横屏）====== */
+@media (min-width:768px) and (orientation:landscape) {
+  .vert-only{display:none}
+  .top-bar{height:25vh}
+  .top-row{height:100%}
+  .time-col .t-num{font-size:130px}
+  .weather-col .w-temp{font-size:48px}
+  .main-area{height:calc(75vh - 110px)}
+  .main-table{height:100%}
+  .sched-list{height:100%}
+  .sched-time{font-size:18px;min-width:62px}
+  .sched-desc{font-size:16px}
+  .sched-row.cur .sched-time{font-size:24px}
+  .sched-row.cur .sched-desc{font-size:20px}
+  .marquee-bar{height:70px}
+  .marquee-text{font-size:50px;line-height:70px}
+}
 </style>
-</head><body>
+</head>
+<body>
 
 <!-- ══════ 夜间 ══════ -->
-<div class="night-content">
-  <div class="night-wrap">
-    <div>
-      <div class="night-temp" id="nightTemp">--°</div>
-      <div class="night-time" id="nightTime">--:--</div>
-      <div class="night-label" id="nightLabel">--</div>
-      <div class="night-city">合肥 · 庐阳</div>
-    </div>
-  </div>
+<div class="night-screen">
+  <div class="night-temp" id="nightTemp">--°</div>
+  <div class="night-time" id="nightTime">--:--</div>
+  <div class="night-label" id="nightLabel">--</div>
+  <div class="night-city">合肥 · 庐阳</div>
 </div>
 
 <!-- ══════ 白天 ══════ -->
 <div class="day-content">
+<div class="day-content-inner">
 
-<div class="topbar">
-  <div><span class="clock" id="clock">--:--</span></div>
-  <div class="weather">
-    <span class="wnow" id="wNow">--°</span>
-    <span class="whl" id="wHL">--° / --°</span>
-  </div>
-  <div><span class="date" id="date">----年--月--日</span></div>
-  <div><span class="weekday" id="weekday">周-</span></div>
-</div>
-
-<div class="now-section">
-  <div class="now-label">现 在</div>
-  <div class="now-task">
-    <span id="nowTask">--</span>
-    <span class="now-tip" id="nowTip"></span>
-  </div>
-</div>
-
-<div class="main">
-  <div class="schedule-col">
-    <h3>📋 今日作息</h3>
-    <table class="schedule-table" id="scheduleTable"></table>
-  </div>
-  <div class="edu-col">
-    <h3>🎨 今日早教主题</h3>
-    <div class="edu-theme">
-      <div class="theme-title" id="themeTitle">--</div>
-      <div class="theme-ability" id="themeAbility">--</div>
+<!-- 横屏顶部 -->
+<div class="top-bar wide-only">
+  <div class="top-row">
+    <div class="weather-col" style="width:20%">
+      <div class="w-icon" id="wIcon">☀️</div>
+      <div class="w-temp" id="wTemp">28°</div>
+      <div class="w-hl" id="wHL">--° / --°</div>
+      <div class="w-detail" id="wDetail">--</div>
     </div>
-    <div class="edu-activities" id="eduActivities"></div>
+    <div class="time-col" style="width:20%">
+      <div class="t-num" id="hh">--</div>
+      <div class="t-label">时</div>
+    </div>
+    <div class="time-col" style="width:20%">
+      <div class="t-num" id="mm">--</div>
+      <div class="t-label">分</div>
+    </div>
+    <div class="time-col" style="width:20%">
+      <div class="t-num" id="ss">--</div>
+      <div class="t-label">秒</div>
+    </div>
+    <div class="theme-col" style="width:20%">
+      <div class="t-emoji" id="tEmoji">🌈</div>
+      <div class="t-name" id="tName">--</div>
+      <div class="t-tip" id="tTip">--</div>
+    </div>
   </div>
 </div>
 
-<div class="bottombar">
-  <div>🍼 奶 500ml/天</div>
-  <div>💧 空调 26-28°C · 少量多次补水</div>
-  <div>☀️ 户外避开 10-16 点强光</div>
-  <div id="weatherBar">📡 加载天气中…</div>
+<!-- 竖屏顶部 -->
+<div class="vert-only">
+  <div class="vert-top">
+    <div class="vert-clock" id="vertClock">--:--:--</div>
+    <div class="vert-info"><span id="vertDate">----年--月--日</span> &nbsp; <span id="vertWeek">周-</span></div>
+    <div class="vert-weather" id="vertWeather">--</div>
+  </div>
+  <div class="vert-theme">
+    <span class="vt-emoji" id="vtEmoji">🌈</span>
+    <span class="vt-name" id="vtName">--</span>
+    <div class="vt-tip" id="vtTip">--</div>
+  </div>
 </div>
 
+<!-- 主要内容区 -->
+<div class="main-area">
+  <div class="main-table wide-only">
+    <div class="sched-col" style="width:65%">
+      <div class="sec-title">⏰ 今日作息</div>
+      <div class="sched-list" id="schedWide"></div>
+    </div>
+    <div class="edu-col" style="width:35%">
+      <div class="sec-title">🎨 今日早教</div>
+      <div id="eduWide"></div>
+    </div>
+  </div>
+  <div class="content-area vert-only">
+    <div class="sched-col">
+      <div class="sec-title">⏰ 今日作息</div>
+      <div class="sched-list" id="schedVert"></div>
+    </div>
+    <div class="edu-col">
+      <div class="sec-title">🎨 今日早教</div>
+      <div id="eduVert"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 跑马灯 -->
+<div class="marquee-wrap">
+  <div class="marquee-bar"><span class="marquee-text" id="marqueeText"></span></div>
+</div>
+
+<div class="signature">adompe</div>
+
+</div><!-- /day-content-inner -->
 </div><!-- /day-content -->
+
 <script>
 // ========== 天气数据 ==========
-var weatherCache = { max: 30, min: 20, now: 25, code: 0, rain: 0 };
+var weatherCache = { max: 30, min: 20, now: null, code: 0, rain: 0, desc: "晴" };
 
 var WCODE = {
   0:"☀️",1:"🌤",2:"⛅",3:"☁️",45:"🌫",48:"🌫",
@@ -264,12 +249,9 @@ var WDESC = {
   95:"雷暴",96:"雷暴冰雹",99:"强雷暴"
 };
 
-// 天气码转文字（低温牌）
-function weatherText(code) {
-  return WDESC[code] || "晴";
-}
+function pad2(n) { return (n < 10 ? "0" : "") + n; }
+function fmtTemp(v) { return (v !== null && v !== undefined) ? v.toFixed(1) : "--"; }
 
-// XMLHttpRequest 获取天气
 function fetchWeather() {
   var xhr = new XMLHttpRequest();
   var d = new Date();
@@ -285,225 +267,228 @@ function fetchWeather() {
         var data = JSON.parse(xhr.responseText);
         var dw = data.daily;
         var cw = data.current_weather || {};
-        weatherCache.max = Math.round(dw.temperature_2m_max[0]);
-        weatherCache.min = Math.round(dw.temperature_2m_min[0]);
+        weatherCache.max = dw.temperature_2m_max[0];
+        weatherCache.min = dw.temperature_2m_min[0];
         weatherCache.code = dw.weathercode[0];
         weatherCache.rain = dw.precipitation_probability_max[0] || 0;
-        weatherCache.now = (cw.temperature !== undefined) ? Math.round(cw.temperature) : null;
+        weatherCache.now = (cw.temperature !== undefined) ? cw.temperature : null;
+        weatherCache.desc = WDESC[weatherCache.code] || "晴";
       } catch(e) {}
     }
     updateWeatherDisplay();
     updateNightScreen();
   };
-  xhr.onerror = function() {
-    updateWeatherDisplay();
-  };
+  xhr.onerror = function() { updateWeatherDisplay(); };
   xhr.send();
-}
-
-function pad2(n) {
-  return (n < 10 ? "0" : "") + n;
 }
 
 function updateWeatherDisplay() {
   var w = weatherCache;
   var icon = WCODE[w.code] || "☀️";
-  var desc = weatherText(w.code);
-  var nowStr = (w.now !== null && w.now !== undefined) ? w.now + "°" : "";
+  var nowStr = fmtTemp(w.now);
 
-  // 顶部天气
-  var elNow = document.getElementById("wNow");
+  // 横屏
+  var elIcon = document.getElementById("wIcon");
+  var elTemp = document.getElementById("wTemp");
   var elHL = document.getElementById("wHL");
-  if (elNow) elNow.textContent = icon + " " + nowStr;
-  if (elHL) elHL.textContent = w.max + "° / " + w.min + "°";
+  var elDetail = document.getElementById("wDetail");
+  if (elIcon) elIcon.textContent = icon;
+  if (elTemp) elTemp.textContent = nowStr + "°";
+  if (elHL) elHL.textContent = fmtTemp(w.max) + "° / " + fmtTemp(w.min) + "°";
+  if (elDetail) elDetail.textContent = w.desc + " · 💧" + w.rain + "%";
 
-  // 底部天气条
-  var elBar = document.getElementById("weatherBar");
-  if (elBar) elBar.textContent = icon + " " + desc + " · 💧" + w.rain + "% · 合肥庐阳";
+  // 竖屏
+  var elVW = document.getElementById("vertWeather");
+  if (elVW) elVW.textContent = icon + " " + nowStr + "°  " + fmtTemp(w.max) + "°/" + fmtTemp(w.min) + "°  " + w.desc + " 💧" + w.rain + "%";
 }
 
 function updateNightScreen() {
+  var nt = document.getElementById("nightTime");
+  if (!nt) return;
   var d = new Date();
-  var h = d.getHours();
-  var m = d.getMinutes();
-  document.getElementById("nightTime").textContent = pad2(h) + ":" + pad2(m);
+  nt.textContent = pad2(d.getHours()) + ":" + pad2(d.getMinutes());
 
   var w = weatherCache;
-  var t = (w.now !== null && w.now !== undefined) ? w.now : Math.round((w.max + w.min) / 2);
-  document.getElementById("nightTemp").textContent = t + "°";
-  document.getElementById("nightLabel").textContent = weatherText(w.code);
+  var elTemp = document.getElementById("nightTemp");
+  var elLabel = document.getElementById("nightLabel");
+  if (elTemp) elTemp.textContent = fmtTemp(w.now) + "°";
+  if (elLabel) elLabel.textContent = w.desc;
 }
 
 // ========== 夜间模式 ==========
 function checkNightMode() {
   var h = new Date().getHours();
-  if (h >= 22 || h < 6) {
-    document.body.className = "night-mode";
-  } else {
-    document.body.className = "";
-  }
+  document.body.className = (h >= 22 || h < 6) ? "night-mode" : "";
 }
 
 // ========== 作息数据 ==========
 var schedule = [
-  { time: "07:00", task: "开胃奶（150ml）+ 洗漱 + 面霜", type: "red", range: [7,0] },
-  { time: "08:40", task: "早餐：鸡蛋 + 馒头/粥/小包子", type: "red", range: [8,40] },
-  { time: "09:30-10:50", task: "户外活动① · 趁凉爽外出（带遮阳帽+水壶）", type: "yellow", range: [9,30] },
-  { time: "12:00", task: "午餐（正餐）：软饭 + 肉菜 + 青菜", type: "red", range: [12,0] },
-  { time: "13:00-15:00", task: "午睡（白天仅一次）· 空调26-28°C", type: "red", range: [13,0] },
-  { time: "15:30", task: "喝奶（160-200ml）+ 主题早教（10-15分钟）", type: "purple", range: [15,30] },
-  { time: "16:00-17:30", task: "户外活动② · 避开强光，滑梯/散步", type: "yellow", range: [16,0] },
-  { time: "18:30", task: "晚餐：面条/馄饨/软饭 + 蔬菜 + 肉末", type: "red", range: [18,30] },
-  { time: "20:00", task: "洗澡 · 温水冲洗，清洁颈部腋下", type: "green", range: [20,0] },
-  { time: "21:00", task: "睡前奶（150-190ml）+ 漱口", type: "red", range: [21,0] },
-  { time: "21:30", task: "入睡准备：换尿不湿 + 故事/音乐 + 关灯", type: "red", range: [21,30] },
-  { time: "07:00(+1)", task: "深睡眠中 · 勿扰 💤", type: "green", range: [22,0] }
+  { time: "07:00", task: "开胃奶（150ml）+ 洗漱 + 面霜", type: "care", range: [7,0] },
+  { time: "08:40", task: "早餐：鸡蛋 + 馒头/粥/小包子", type: "eat", range: [8,40] },
+  { time: "09:30-10:50", task: "户外活动① · 趁凉爽外出（带遮阳帽+水壶）", type: "play", range: [9,30] },
+  { time: "12:00", task: "午餐（正餐）：软饭 + 肉菜 + 青菜", type: "eat", range: [12,0] },
+  { time: "13:00-15:00", task: "午睡（白天仅一次）· 空调26-28°C", type: "sleep", range: [13,0] },
+  { time: "15:30", task: "喝奶（160-200ml）+ 主题早教（10-15分钟）", type: "learn", range: [15,30] },
+  { time: "16:00-17:30", task: "户外活动② · 避开强光，滑梯/散步", type: "play", range: [16,0] },
+  { time: "18:30", task: "晚餐：面条/馄饨/软饭 + 蔬菜 + 肉末", type: "eat", range: [18,30] },
+  { time: "20:00", task: "洗澡 · 温水冲洗，清洁颈部腋下", type: "care", range: [20,0] },
+  { time: "21:00", task: "睡前奶（150-190ml）+ 漱口", type: "eat", range: [21,0] },
+  { time: "21:30", task: "入睡准备：换尿不湿 + 故事/音乐 + 关灯", type: "sleep", range: [21,30] }
 ];
+
+var TAG_MAP = { eat: ["🥣","必须"], sleep: ["💤","必须"], play: ["🎈","灵活"], learn: ["📖","早教"], care: ["🧴","护理"] };
 
 // ========== 早教数据 ==========
 var eduData = [
-  {
-    title: "亲子时光", ability: "情感联结 · 安全感建立",
-    activities: [
-      { label: "早晨 8:40", text: "亲子共读马拉松 · 窝在沙发里读绘本" },
-      { label: "户外 9:30/16:00", text: "抱着宝宝跳舞、躲猫猫、追逐嬉笑" },
-      { label: "主题早教 15:30", text: "翻看家庭相册 · 指认「这是爸爸」「这是奶奶」" },
-      { label: "睡前 21:00", text: "拥抱 + 摇篮曲 · 没有「课程」，只有「在一起」" }
-    ]
-  },
-  {
-    title: "颜色认知", ability: "视觉辨识 · 分类能力",
-    activities: [
-      { label: "早晨 8:40", text: "读《棕色的熊》· 指认「红色」「黄色」" },
-      { label: "户外 9:30/16:00", text: "颜色寻宝：找「绿色叶子」「红色花」「蓝色天空」" },
-      { label: "主题早教 15:30", text: "红黄蓝积木 + 同色小碗分类" },
-      { label: "睡前 21:00", text: "回顾：「今天看到了什么颜色呀？」" }
-    ]
-  },
-  {
-    title: "动物世界", ability: "认知记忆 · 语言模仿",
-    activities: [
-      { label: "早晨 8:40", text: "读《Dear Zoo》· 模仿动物叫声" },
-      { label: "户外 9:30/16:00", text: "观察路边蚂蚁、小鸟、蝴蝶" },
-      { label: "主题早教 15:30", text: "动物卡片配对 · 从2-3张中找出对应动物" },
-      { label: "睡前 21:00", text: "动物模仿秀：「小兔子怎么跳？」" }
-    ]
-  },
-  {
-    title: "身体认知", ability: "自我意识 · 语言表达",
-    activities: [
-      { label: "早晨 8:40", text: "读《从头动到脚》· 一边读一边做动作" },
-      { label: "户外 9:30/16:00", text: "边走边玩「指鼻子、指耳朵」游戏" },
-      { label: "主题早教 15:30", text: "镜子游戏：站在镜前指认五官" },
-      { label: "睡前 21:00", text: "贴贴画：在笑脸轮廓上贴眼睛鼻子嘴巴" }
-    ]
-  },
-  {
-    title: "音乐律动", ability: "节奏感知 · 大运动协调",
-    activities: [
-      { label: "早晨 8:40", text: "读发声书/儿歌书 · 哼唱 + 拍手打节奏" },
-      { label: "户外 9:30/16:00", text: "边走边唱《小星星》《两只老虎》" },
-      { label: "主题早教 15:30", text: "DIY沙锤（矿泉水瓶+豆子）随音乐摇摆" },
-      { label: "睡前 21:00", text: "轻柔摇篮曲 · 节奏拍背" }
-    ]
-  },
-  {
-    title: "自然探索", ability: "感官体验 · 观察力",
-    activities: [
-      { label: "早晨 8:40", text: "读《叶子先生》· 用简单词语描述画面" },
-      { label: "户外 9:30/16:00", text: "捡树叶、玩沙、看蚂蚁" },
-      { label: "主题早教 15:30", text: "感官盆：沙/水/米 + 铲子杯子自由探索" },
-      { label: "睡前 21:00", text: "回顾：「今天捡到了什么样的叶子呀？」" }
-    ]
-  },
-  {
-    title: "生活技能", ability: "自理能力 · 秩序感",
-    activities: [
-      { label: "早晨 8:40", text: "自己抓着吃早餐（手指食物）允许弄脏" },
-      { label: "户外 9:30/16:00", text: "练习自己穿脱帽子、袜子" },
-      { label: "主题早教 15:30", text: "「小小帮手」：把玩具收回收纳箱" },
-      { label: "睡前 21:00", text: "睡前自己拿睡衣、配合穿衣服" }
-    ]
-  }
+  { title: "亲子时光", ability: "情感联结 · 安全感建立", activities: [
+    { label: "早晨 8:40", text: "亲子共读马拉松 · 窝在沙发里读绘本" },
+    { label: "户外 9:30/16:00", text: "抱着宝宝跳舞、躲猫猫、追逐嬉笑" },
+    { label: "主题早教 15:30", text: "翻看家庭相册 · 指认「这是爸爸」「这是奶奶」" },
+    { label: "睡前 21:00", text: "拥抱 + 摇篮曲 · 没有「课程」，只有「在一起」" }
+  ]},
+  { title: "颜色认知", ability: "视觉辨识 · 分类能力", activities: [
+    { label: "早晨 8:40", text: "读《棕色的熊》· 指认「红色」「黄色」" },
+    { label: "户外 9:30/16:00", text: "颜色寻宝：找「绿色叶子」「红色花」「蓝色天空」" },
+    { label: "主题早教 15:30", text: "红黄蓝积木 + 同色小碗分类" },
+    { label: "睡前 21:00", text: "回顾：「今天看到了什么颜色呀？」" }
+  ]},
+  { title: "动物世界", ability: "认知记忆 · 语言模仿", activities: [
+    { label: "早晨 8:40", text: "读《Dear Zoo》· 模仿动物叫声" },
+    { label: "户外 9:30/16:00", text: "观察路边蚂蚁、小鸟、蝴蝶" },
+    { label: "主题早教 15:30", text: "动物卡片配对 · 从2-3张中找出对应动物" },
+    { label: "睡前 21:00", text: "动物模仿秀：「小兔子怎么跳？」" }
+  ]},
+  { title: "身体认知", ability: "自我意识 · 语言表达", activities: [
+    { label: "早晨 8:40", text: "读《从头动到脚》· 一边读一边做动作" },
+    { label: "户外 9:30/16:00", text: "边走边玩「指鼻子、指耳朵」游戏" },
+    { label: "主题早教 15:30", text: "镜子游戏：站在镜前指认五官" },
+    { label: "睡前 21:00", text: "贴贴画：在笑脸轮廓上贴眼睛鼻子嘴巴" }
+  ]},
+  { title: "音乐律动", ability: "节奏感知 · 大运动协调", activities: [
+    { label: "早晨 8:40", text: "读发声书/儿歌书 · 哼唱 + 拍手打节奏" },
+    { label: "户外 9:30/16:00", text: "边走边唱《小星星》《两只老虎》" },
+    { label: "主题早教 15:30", text: "DIY沙锤（矿泉水瓶+豆子）随音乐摇摆" },
+    { label: "睡前 21:00", text: "轻柔摇篮曲 · 节奏拍背" }
+  ]},
+  { title: "自然探索", ability: "感官体验 · 观察力", activities: [
+    { label: "早晨 8:40", text: "读《叶子先生》· 用简单词语描述画面" },
+    { label: "户外 9:30/16:00", text: "捡树叶、玩沙、看蚂蚁" },
+    { label: "主题早教 15:30", text: "感官盆：沙/水/米 + 铲子杯子自由探索" },
+    { label: "睡前 21:00", text: "回顾：「今天捡到了什么样的叶子呀？」" }
+  ]},
+  { title: "生活技能", ability: "自理能力 · 秩序感", activities: [
+    { label: "早晨 8:40", text: "自己抓着吃早餐（手指食物）允许弄脏" },
+    { label: "户外 9:30/16:00", text: "练习自己穿脱帽子、袜子" },
+    { label: "主题早教 15:30", text: "「小小帮手」：把玩具收回收纳箱" },
+    { label: "睡前 21:00", text: "睡前自己拿睡衣、配合穿衣服" }
+  ]}
 ];
 
 // ========== 渲染函数 ==========
-function renderSchedule(nowHour, nowMin) {
-  var html = "";
-  var currentIdx = -1;
+function findCurrent(nowHour, nowMin) {
   var nowTotal = nowHour * 60 + nowMin;
+  var idx = schedule.length - 1;
   for (var i = schedule.length - 1; i >= 0; i--) {
-    var t = schedule[i].range;
-    var tTotal = t[0] * 60 + t[1];
-    if (nowTotal >= tTotal) { currentIdx = i; break; }
+    if (nowTotal >= schedule[i].range[0] * 60 + schedule[i].range[1]) { idx = i; break; }
   }
-  if (currentIdx === -1) currentIdx = 0;
+  return idx;
+}
 
+function renderSchedule(nowHour, nowMin, targetId) {
+  var el = document.getElementById(targetId);
+  if (!el) return;
+  var cur = findCurrent(nowHour, nowMin);
+  var html = "";
   for (var i = 0; i < schedule.length; i++) {
     var s = schedule[i];
-    var tagClass = "tag-" + s.type;
-    var tagText = "";
-    if (s.type === "red")    tagText = "必须";
-    if (s.type === "yellow") tagText = "灵活";
-    if (s.type === "green")  tagText = "建议";
-    if (s.type === "purple") tagText = "早教";
-    var cls = (i === currentIdx) ? " highlight" : "";
-
-    html += "<tr class=\"" + cls + "\">";
-    html += "<td class=\"time-cell\">" + s.time + "</td>";
-    html += "<td class=\"task-cell\">" + s.task + "</td>";
-    html += "<td class=\"type-cell\"><span class=\"" + tagClass + "\">" + tagText + "</span></td>";
-    html += "</tr>";
+    var tm = TAG_MAP[s.type] || ["📌",""];
+    var cls = (i === cur) ? " sched-row cur" : " sched-row";
+    html += "<div class=\"" + cls + "\">";
+    html += "<div class=\"sched-time\">" + s.time + "</div>";
+    html += "<div class=\"sched-tag tag-" + s.type + "\">" + tm[0] + "</div>";
+    html += "<div class=\"sched-desc\">" + s.task + "</div>";
+    html += "</div>";
   }
-  document.getElementById("scheduleTable").innerHTML = html;
+  el.innerHTML = html;
 }
 
-function renderNowTask(nowHour, nowMin) {
-  var nowTotal = nowHour * 60 + nowMin;
-  var task = schedule[schedule.length - 1];
-  for (var i = schedule.length - 1; i >= 0; i--) {
-    var t = schedule[i].range;
-    if (nowTotal >= t[0] * 60 + t[1]) { task = schedule[i]; break; }
-  }
-  document.getElementById("nowTask").textContent = task.task;
-  document.getElementById("nowTip").textContent = "「" + task.time + "」";
-}
-
-function renderEdu(d) {
-  var data = eduData[d];
-  document.getElementById("themeTitle").textContent = data.title;
-  document.getElementById("themeAbility").textContent = data.ability;
+function renderEdu(dow, targetId) {
+  var el = document.getElementById(targetId);
+  if (!el) return;
+  var data = eduData[dow % 7];
   var html = "";
   for (var i = 0; i < data.activities.length; i++) {
     var a = data.activities[i];
-    html += "<div class=\"act-item\"><span class=\"act-label\">" + a.label + "</span>：" + a.text + "</div>";
+    html += "<div class=\"edu-card\">";
+    html += "<div class=\"e-time\">" + a.label + "</div>";
+    html += "<div class=\"e-title\">" + a.text.substring(0, a.text.indexOf("·") > 0 ? a.text.indexOf("·") : a.text.length) + "</div>";
+    html += "<div class=\"e-detail\">" + a.text + "</div>";
+    html += "</div>";
   }
-  document.getElementById("eduActivities").innerHTML = html;
+  el.innerHTML = html;
 }
 
+function updateMarquee(nowHour, nowMin) {
+  var el = document.getElementById("marqueeText");
+  if (!el) return;
+  var cur = findCurrent(nowHour, nowMin);
+  var s = schedule[cur];
+  var tm = TAG_MAP[s.type] || ["📌",""];
+  el.textContent = "⏰ 现在是 " + s.time + " " + tm[0] + " " + s.task + " —— 下一个：" + (cur < schedule.length - 1 ? schedule[cur + 1].time + " " + schedule[cur + 1].task : "新的一天开始啦！");
+}
+
+// ========== 主更新 ==========
 function update() {
   var now = new Date();
   var h = now.getHours();
   var m = now.getMinutes();
+  var s = now.getSeconds();
   var dow = now.getDay();
   var md = now.getMonth() + 1;
   var dd = now.getDate();
   var weekNames = ["日","一","二","三","四","五","六"];
 
-  // 夜间模式
   checkNightMode();
 
-  // 白天情况下才更新这些
-  if (!(h >= 22 || h < 6)) {
-    document.getElementById("clock").textContent = pad2(h) + ":" + pad2(m);
-    document.getElementById("date").textContent = now.getFullYear() + "年" + md + "月" + dd + "日";
-    document.getElementById("weekday").textContent = "周" + weekNames[dow];
-    renderNowTask(h, m);
-    renderSchedule(h, m);
-    renderEdu(dow);
+  // 夜间
+  if (h >= 22 || h < 6) {
+    updateNightScreen();
+    return;
   }
 
-  // 夜间更新时间
+  // 横屏时钟
+  var elHh = document.getElementById("hh");
+  var elMm = document.getElementById("mm");
+  var elSs = document.getElementById("ss");
+  if (elHh) elHh.textContent = pad2(h);
+  if (elMm) elMm.textContent = pad2(m);
+  if (elSs) elSs.textContent = pad2(s);
+
+  // 竖屏时钟
+  var elVc = document.getElementById("vertClock");
+  if (elVc) elVc.textContent = pad2(h) + ":" + pad2(m) + ":" + pad2(s);
+  var elVd = document.getElementById("vertDate");
+  if (elVd) elVd.textContent = now.getFullYear() + "年" + md + "月" + dd + "日";
+  var elVw = document.getElementById("vertWeek");
+  if (elVw) elVw.textContent = "周" + weekNames[dow];
+
+  // 渲染（每30秒渲染一次以节省性能）
+  if (!update._lastRenderMin || update._lastRenderMin !== m) {
+    update._lastRenderMin = m;
+    renderSchedule(h, m, "schedWide");
+    renderSchedule(h, m, "schedVert");
+    renderEdu(dow, "eduWide");
+    renderEdu(dow, "eduVert");
+    updateMarquee(h, m);
+
+    // 主题
+    var themeData = eduData[dow % 7];
+    document.getElementById("tName") && (document.getElementById("tName").textContent = themeData.title);
+    document.getElementById("tTip") && (document.getElementById("tTip").textContent = themeData.ability);
+    document.getElementById("vtName") && (document.getElementById("vtName").textContent = themeData.title);
+    document.getElementById("vtTip") && (document.getElementById("vtTip").textContent = themeData.ability);
+  }
+
   updateNightScreen();
 }
 
@@ -512,10 +497,7 @@ checkNightMode();
 update();
 fetchWeather();
 
-// 每30秒刷新显示
 setInterval(update, 1000);
-// 每10分钟刷新天气
 setInterval(fetchWeather, 600000);
 </script>
-</body>
-</html>
+</body></html>
