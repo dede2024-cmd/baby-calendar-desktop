@@ -2,7 +2,11 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<!-- v20260617-a -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="宝宝日历">
@@ -366,9 +370,9 @@ function updateWideClock() {
   var elHh = document.getElementById("hh");
   var elMm = document.getElementById("mm");
   var elSs = document.getElementById("ss");
-  if (elHh) elHh.textContent = String(n.getHours()).padStart(2, "0");
-  if (elMm) elMm.textContent = String(n.getMinutes()).padStart(2, "0");
-  if (elSs) elSs.textContent = String(n.getSeconds()).padStart(2, "0");
+  if (elHh) elHh.textContent = ("0"+n.getHours()).slice(-2);
+  if (elMm) elMm.textContent = ("0"+n.getMinutes()).slice(-2);
+  if (elSs) elSs.textContent = ("0"+n.getSeconds()).slice(-2);
 }
 
 // ═══════════ 竖屏时钟 ═══════════
@@ -376,7 +380,7 @@ function updateVertClock() {
   var n = new Date();
   var el = document.getElementById("liveClock");
   var ds = document.getElementById("dateStr");
-  if (el) el.textContent = String(n.getHours()).padStart(2,"0") + ":" + String(n.getMinutes()).padStart(2,"0");
+  if (el) el.textContent = ("0"+n.getHours()).slice(-2) + ":" + ("0"+n.getMinutes()).slice(-2);
   if (ds) ds.textContent = (n.getMonth()+1) + "月" + n.getDate() + "日 " + WEEKDAYS[n.getDay()];
 }
 
@@ -395,7 +399,7 @@ async function fetchWeather() {
       min: dw.temperature_2m_min[0],
       code: dw.weathercode[0],
       rain: dw.precipitation_probability_max[0] || 0,
-      now: cw.temperature !== undefined ? Math.round(cw.temperature) : null,
+      now: cw.temperature !== undefined ? cw.temperature : null,
     };
   } catch(e) {
     weatherCache = {max:30,min:20,code:0,rain:0,now:25};
@@ -408,23 +412,23 @@ function renderWeather() {
   var w = weatherCache || {max:30,min:20,code:0,rain:0,now:null};
   var icon = WCODE[w.code] || "☀️";
   var desc = WDESC[w.code] || "晴";
-  var nowStr = (w.now !== null && w.now !== undefined) ? Math.round(w.now)+"° " : "";
+  var nowStr = (w.now !== null && w.now !== undefined) ? w.now.toFixed(1)+"° " : "";
   document.getElementById("weatherInline").innerHTML = 
-    `${icon} ${nowStr}${Math.round(w.max)}° / ${Math.round(w.min)}°`;
+    `${icon} ${nowStr}${w.max.toFixed(1)}° / ${w.min.toFixed(1)}°`;
   document.getElementById("weatherDetail").textContent = 
     `${desc} · 降水 ${w.rain}% · ${CITY}`;
   // 横屏天气栏
   var wi2 = document.getElementById("weatherInlineWide");
-  if (wi2) wi2.innerHTML = `${icon} ${nowStr}${Math.round(w.max)}° / ${Math.round(w.min)}°`;
+  if (wi2) wi2.innerHTML = `${icon} ${nowStr}${w.max.toFixed(1)}° / ${w.min.toFixed(1)}°`;
   // 宽屏 column5（竖屏横放顶部天气列）
   var c5 = document.getElementById("col5wx");
-  if (c5) c5.innerHTML = `${icon}<br>${nowStr}${Math.round(w.max)}° / ${Math.round(w.min)}°`;
+  if (c5) c5.innerHTML = `${icon}<br>${nowStr}${w.max.toFixed(1)}° / ${w.min.toFixed(1)}°`;
   // 旧版顶部横屏三元素兼容
   var wic = document.getElementById("wIcon");
   var wt = document.getElementById("wTemp");
   var ws = document.getElementById("wSub");
   if (wic) wic.textContent = icon;
-  if (wt) wt.textContent = nowStr + Math.round(w.max) + "° / " + Math.round(w.min) + "°";
+  if (wt) wt.textContent = nowStr + w.max.toFixed(1) + "° / " + w.min.toFixed(1) + "°";
   if (ws) ws.textContent = CITY + " · " + desc + " · 💧" + w.rain + "%";
 }
 
@@ -687,15 +691,17 @@ function checkNightMode(d) {
 
 // ═══════════ 更新夜间屏幕 ═══════════
 function updateNightScreen() {
+  var nt = qs("#nightTime");
+  if (!nt) return; // 白天无夜间元素，安全退出
   var d = new Date();
   var h = d.getHours(), m = d.getMinutes();
-  var ts = String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
-  qs("#nightTime").textContent = ts;
+  var ts = ("0"+h).slice(-2)+":"+("0"+m).slice(-2);
+  nt.textContent = ts;
   if (weatherCache && weatherCache.now !== null && weatherCache.now !== undefined) {
     qs("#nightTemp").innerHTML = weatherCache.now + "°";
   } else if (weatherCache) {
     // 没有实时温度时用最高最低的平均值
-    var avg = Math.round((weatherCache.max + weatherCache.min) / 2);
+    var avg = ((weatherCache.max + weatherCache.min) / 2).toFixed(1);
     qs("#nightTemp").innerHTML = avg + "°";
   }
   if (weatherCache && weatherCache.code !== undefined) {
